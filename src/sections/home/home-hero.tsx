@@ -1,7 +1,7 @@
 import { m, useScroll } from 'framer-motion';
 import { useEffect, useRef, useState, useCallback } from 'react';
 // @mui
-import { styled, alpha, useTheme } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
@@ -44,6 +44,8 @@ const StyledWrapper = styled('div')(({ theme }) => ({
   height: '100%',
   overflow: 'hidden',
   position: 'relative',
+  backgroundImage: 'url(/assets/main-bg.jpeg)',
+  backgroundSize: 'cover',
   [theme.breakpoints.up('md')]: {
     marginTop: HEADER.H_DESKTOP_OFFSET,
   },
@@ -65,30 +67,6 @@ const StyledTextGradient = styled(m.h1)(({ theme }) => ({
   [theme.breakpoints.up('md')]: {
     fontSize: `${96 / 16}rem`,
   },
-}));
-
-const StyledEllipseTop = styled('div')(({ theme }) => ({
-  top: -80,
-  width: 480,
-  right: -80,
-  height: 480,
-  borderRadius: '50%',
-  position: 'absolute',
-  filter: 'blur(100px)',
-  WebkitFilter: 'blur(100px)',
-  backgroundColor: alpha(theme.palette.primary.darker, 0.12),
-}));
-
-const StyledEllipseBottom = styled('div')(({ theme }) => ({
-  height: 400,
-  bottom: -200,
-  left: '10%',
-  right: '10%',
-  borderRadius: '50%',
-  position: 'absolute',
-  filter: 'blur(100px)',
-  WebkitFilter: 'blur(100px)',
-  backgroundColor: alpha(theme.palette.primary.darker, 0.12),
 }));
 
 type StyledPolygonProps = {
@@ -129,15 +107,11 @@ const StyledPolygon = styled('div')<StyledPolygonProps>(
 export default function HomeHero() {
   const mdUp = useResponsive('up', 'md');
 
-  const theme = useTheme();
-
   const heroRef = useRef<HTMLDivElement | null>(null);
 
   const { scrollY } = useScroll();
 
   const [percent, setPercent] = useState(0);
-
-  const isLight = theme.palette.mode === 'light';
 
   const getScroll = useCallback(() => {
     let heroHeight = 0;
@@ -156,13 +130,6 @@ export default function HomeHero() {
   useEffect(() => {
     getScroll();
   }, [getScroll]);
-
-  const transition = {
-    repeatType: 'loop',
-    ease: 'linear',
-    duration: 60 * 4,
-    repeat: Infinity,
-  } as const;
 
   const opacity = 1 - percent / 100;
 
@@ -301,100 +268,12 @@ export default function HomeHero() {
     </Stack>
   );
 
-  const renderSlides = (
-    <Stack
-      direction="row"
-      alignItems="flex-start"
-      sx={{
-        height: '150%',
-        position: 'absolute',
-        opacity: opacity > 0 ? opacity : 0,
-        transform: `skew(${-16 - percent / 24}deg, ${4 - percent / 16}deg)`,
-        ...(theme.direction === 'rtl' && {
-          transform: `skew(${16 + percent / 24}deg, ${4 + percent / 16}deg)`,
-        }),
-      }}
-    >
-      <Stack
-        component={m.div}
-        variants={varFade().in}
-        sx={{
-          width: 344,
-          position: 'relative',
-        }}
-      >
-        <Box
-          component={m.img}
-          animate={{ y: ['0%', '100%'] }}
-          transition={transition}
-          alt={isLight ? 'light_1' : 'dark_1'}
-          src={
-            isLight
-              ? `/assets/images/home/hero/light_1.webp`
-              : `/assets/images/home/hero/dark_1.webp`
-          }
-          sx={{ position: 'absolute', mt: -5 }}
-        />
-        <Box
-          component={m.img}
-          animate={{ y: ['-100%', '0%'] }}
-          transition={transition}
-          alt={isLight ? 'light_1' : 'dark_1'}
-          src={
-            isLight
-              ? `/assets/images/home/hero/light_1.webp`
-              : `/assets/images/home/hero/dark_1.webp`
-          }
-          sx={{ position: 'absolute' }}
-        />
-      </Stack>
-
-      <Stack
-        component={m.div}
-        variants={varFade().in}
-        sx={{ width: 720, position: 'relative', ml: -5 }}
-      >
-        <Box
-          component={m.img}
-          animate={{ y: ['100%', '0%'] }}
-          transition={transition}
-          alt={isLight ? 'light_2' : 'dark_2'}
-          src={
-            isLight
-              ? `/assets/images/home/hero/light_2.webp`
-              : `/assets/images/home/hero/dark_2.webp`
-          }
-          sx={{ position: 'absolute', mt: -5 }}
-        />
-        <Box
-          component={m.img}
-          animate={{ y: ['0%', '-100%'] }}
-          transition={transition}
-          alt={isLight ? 'light_2' : 'dark_2'}
-          src={
-            isLight
-              ? `/assets/images/home/hero/light_2.webp`
-              : `/assets/images/home/hero/dark_2.webp`
-          }
-          sx={{ position: 'absolute' }}
-        />
-      </Stack>
-    </Stack>
-  );
-
   const renderPolygons = (
     <>
       <StyledPolygon />
       <StyledPolygon anchor="right" opacity={0.48} />
       <StyledPolygon anchor="right" opacity={0.48} sx={{ height: 48, zIndex: 10 }} />
       <StyledPolygon anchor="right" sx={{ zIndex: 11, height: 24 }} />
-    </>
-  );
-
-  const renderEllipses = (
-    <>
-      {mdUp && <StyledEllipseTop />}
-      <StyledEllipseBottom />
     </>
   );
 
@@ -410,16 +289,10 @@ export default function HomeHero() {
       >
         <StyledWrapper>
           <Container component={MotionContainer} sx={{ height: 1 }}>
-            <Grid container columnSpacing={{ md: 10 }} sx={{ height: 1 }}>
-              <Grid xs={12} md={6}>
+            <Grid container sx={{ height: 1 }}>
                 {renderDescription}
-              </Grid>
-
-              {mdUp && <Grid md={6}>{renderSlides}</Grid>}
             </Grid>
           </Container>
-
-          {renderEllipses}
         </StyledWrapper>
       </StyledRoot>
 

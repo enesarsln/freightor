@@ -6,9 +6,11 @@ import TextField, { TextFieldProps } from '@mui/material/TextField';
 
 type Props = TextFieldProps & {
   name: string;
+  isReadOnly?: boolean;
+  paramValue?: string;
 };
 
-export default function RHFTextField({ name, helperText, type, ...other }: Props) {
+export default function RHFTextField({ name, helperText, type, paramValue, isReadOnly = false, ...other }: Props) {
   const { control } = useFormContext();
 
   return (
@@ -20,7 +22,9 @@ export default function RHFTextField({ name, helperText, type, ...other }: Props
           {...field}
           fullWidth
           type={type}
+          defaultValue={paramValue}
           value={type === 'number' && field.value === 0 ? '' : field.value}
+          disabled={isReadOnly}
           onChange={(event) => {
             if (type === 'number') {
               field.onChange(Number(event.target.value));
@@ -31,6 +35,13 @@ export default function RHFTextField({ name, helperText, type, ...other }: Props
           error={!!error}
           helperText={error ? error?.message : helperText}
           {...other}
+          sx={{
+            '& .Mui-disabled': {
+              fontWeight: 'bold',
+              '-webkit-text-fill-color': '#808080',
+              backgroundColor: '#ececec'
+            }
+          }}
         />
       )}
     />

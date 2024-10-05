@@ -1,51 +1,19 @@
 import * as Yup from 'yup';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 // @mui
 import LoadingButton from '@mui/lab/LoadingButton';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
-import ButtonBase from '@mui/material/ButtonBase';
-import CardHeader from '@mui/material/CardHeader';
-import Typography from '@mui/material/Typography';
-import InputAdornment from '@mui/material/InputAdornment';
-import FormControlLabel from '@mui/material/FormControlLabel';
-// hooks
-import { useResponsive } from 'src/hooks/use-responsive';
-// routes
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
 // _mock
-import {
-  _roles,
-  JOB_SKILL_OPTIONS,
-  JOB_BENEFIT_OPTIONS,
-  JOB_EXPERIENCE_OPTIONS,
-  JOB_EMPLOYMENT_TYPE_OPTIONS,
-  JOB_WORKING_SCHEDULE_OPTIONS,
-} from 'src/_mock';
-// assets
-import { countries } from 'src/assets/data';
-// components
-import Iconify from 'src/components/iconify';
-import { useSnackbar } from 'src/components/snackbar';
-import FormProvider, {
-  RHFEditor,
-  RHFSwitch,
-  RHFTextField,
-  RHFRadioGroup,
-  RHFAutocomplete,
-  RHFMultiCheckbox,
-} from 'src/components/hook-form';
+import { _roles } from 'src/_mock';
+import FormProvider, { RHFTextField } from 'src/components/hook-form';
 // types
 import { IJobItem } from 'src/types/job';
+import { TextField, Typography } from '@mui/material';
+import axios from 'axios';
 
 // ----------------------------------------------------------------------
 
@@ -54,11 +22,9 @@ type Props = {
 };
 
 export default function JobNewEditForm({ currentJob }: Props) {
-  const router = useRouter();
-
-  const mdUp = useResponsive('up', 'md');
-
-  const { enqueueSnackbar } = useSnackbar();
+  // const { enqueueSnackbar } = useSnackbar();
+  const [isShowFlightInfo, setIsShowFlightNo] = useState(false);
+  const [weightAllowance, setWeightAllowance] = useState(0);
 
   const NewJobSchema = Yup.object().shape({
     title: Yup.string().required('Title is required'),
@@ -106,8 +72,6 @@ export default function JobNewEditForm({ currentJob }: Props) {
 
   const {
     reset,
-    control,
-    handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
@@ -117,329 +81,177 @@ export default function JobNewEditForm({ currentJob }: Props) {
     }
   }, [currentJob, defaultValues, reset]);
 
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      enqueueSnackbar(currentJob ? 'Update success!' : 'Create success!');
-      router.push(paths.dashboard.job.root);
-      console.info('DATA', data);
-    } catch (error) {
-      console.error(error);
-    }
-  });
+  const getFlightInfo = () => {
+    setIsShowFlightNo(true);
+  };
 
-  const renderDetails = (
-    <>
-      {mdUp && (
-        <Grid md={4}>
-          <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Details
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Title, short description, image...
-          </Typography>
-        </Grid>
-      )}
+  const sendBaggage = () => {
+    const data = {
+      '@context': {
+        cargo: 'https://onerecord.iata.org/ns/cargo#',
+      },
+      '@type': 'cargo:Shipment',
+      'cargo:goodsDescription': 'Shipment of 250 iPhone PRO 14',
+      'cargo:totalGrossWeight': {
+        '@type': 'cargo:Value',
+        'cargo:unit': 'KG',
+        'cargo:numericalValue': 25,
+      },
+      'cargo:totalDimensions': {
+        'cargo:height': {
+          '@type': 'cargo:Value',
+          'cargo:unit': 'M',
+          'cargo:numericalValue': 3,
+        },
+        'cargo:length': {
+          '@type': 'cargo:Value',
+          'cargo:unit': 'M',
+          'cargo:numericalValue': 7,
+        },
+        'cargo:width': {
+          '@type': 'cargo:Value',
+          'cargo:unit': 'M',
+          'cargo:numericalValue': 4.8,
+        },
+        'cargo:volume': {
+          '@type': 'cargo:Value',
+          'cargo:unit': 'MC',
+          'cargo:numericalValue': 100,
+        },
+      },
+      'cargo:shipmentOfPieces': [
+        {
+          '@id': 'http://localhost:8080/logistics-objects/de68c9de-028a-474b-bcd7-6ced55060ad7',
+        },
+      ],
+      'cargo:involvedParties': [
+        {
+          '@type': 'cargo:Party',
+          'cargo:role': 'Shipper',
+          'cargo:organization': {
+            '@id': 'http://localhost:8080/logistics-objects/_data-holder',
+          },
+        },
+      ],
+    };
 
-      <Grid xs={12} md={8}>
-        <Card>
-          {!mdUp && <CardHeader title="Details" />}
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'http://localhost:8080/logistics-objects',
+      headers: {
+        'Content-Type': 'application/ld+json; version=2.0.0-dev',
+        Accept: 'application/ld+json; version=2.0.0-dev',
+        Authorization:
+          'Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJGYzdaSHZUNGozbldNenZkX2xuYUsySGZWWnUtYWtBLTB0TGMwLVgwc1BZIn0.eyJleHAiOjE3MjgxOTE3NjgsImlhdCI6MTcyODE1NTc2OCwianRpIjoiNmQ2YzY2OTUtZmZhYS00YzEzLWEzZDctMjdiNWQ0YmYwN2U4IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4OTg5L3JlYWxtcy9uZW9uZSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIwYWU4OThmMy1kMjQ4LTRlYWMtODY4MS1iMDM4MWM4MmQ2YzAiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJuZW9uZS1jbGllbnQiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIioiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1uZW9uZSIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiY2xpZW50SG9zdCI6IjE5Mi4xNjguNjUuMSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwibG9naXN0aWNzX2FnZW50X3VyaSI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC9sb2dpc3RpY3Mtb2JqZWN0cy9fZGF0YS1ob2xkZXIiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJzZXJ2aWNlLWFjY291bnQtbmVvbmUtY2xpZW50IiwiY2xpZW50QWRkcmVzcyI6IjE5Mi4xNjguNjUuMSIsImNsaWVudF9pZCI6Im5lb25lLWNsaWVudCJ9.muTCw530NMmX8CUd4CALcmDmNpM_Yw1YkfJPEzCaFdPCBiSqbIVcxPD0F76S2Q7ZPkQ0ozZJXCzK0EowRNI56ZZLct3vLzF17YuqGOexZ9lFZ-wGHMyTovrsD51hlq8KQVTn8MBr6hmfwyCy6ZX9MYVDKakbeu8GEFW2cyutcJwNsOUSVUSREZmr1URHkQVhkbhYtsLd6HglQ4ip5YgcOLc577zwrPuQh_KC_9T1H8JRwfZH26_ZZFzui3CzrFBOdbLXhKkIqwE_v_fbINwnR82WhNO3gHKoWifu9QNkxmvKmvKGGDIw20I3zY0n4G2JtUboRxVGYatDDGtZDTZjGQ',
+      },
+      data,
+    };
 
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Title</Typography>
-              <RHFTextField name="title" placeholder="Ex: Software Engineer..." />
-            </Stack>
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Content</Typography>
-              <RHFEditor simple name="content" />
-            </Stack>
-          </Stack>
-        </Card>
-      </Grid>
-    </>
-  );
-
-  const renderProperties = (
-    <>
-      {mdUp && (
-        <Grid md={4}>
-          <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Properties
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Additional functions and attributes...
-          </Typography>
-        </Grid>
-      )}
-
-      <Grid xs={12} md={8}>
-        <Card>
-          {!mdUp && <CardHeader title="Properties" />}
-
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">Employment type</Typography>
-              <RHFMultiCheckbox
-                row
-                spacing={4}
-                name="employmentTypes"
-                options={JOB_EMPLOYMENT_TYPE_OPTIONS}
-              />
-            </Stack>
-
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">Experience</Typography>
-              <RHFRadioGroup row spacing={4} name="experience" options={JOB_EXPERIENCE_OPTIONS} />
-            </Stack>
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Role</Typography>
-              <RHFAutocomplete
-                name="role"
-                autoHighlight
-                options={_roles.map((option) => option)}
-                getOptionLabel={(option) => option}
-                renderOption={(props, option) => (
-                  <li {...props} key={option}>
-                    {option}
-                  </li>
-                )}
-              />
-            </Stack>
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Skills</Typography>
-              <RHFAutocomplete
-                name="skills"
-                placeholder="+ Skills"
-                multiple
-                disableCloseOnSelect
-                options={JOB_SKILL_OPTIONS.map((option) => option)}
-                getOptionLabel={(option) => option}
-                renderOption={(props, option) => (
-                  <li {...props} key={option}>
-                    {option}
-                  </li>
-                )}
-                renderTags={(selected, getTagProps) =>
-                  selected.map((option, index) => (
-                    <Chip
-                      {...getTagProps({ index })}
-                      key={option}
-                      label={option}
-                      size="small"
-                      color="info"
-                      variant="soft"
-                    />
-                  ))
-                }
-              />
-            </Stack>
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Working schedule</Typography>
-              <RHFAutocomplete
-                name="workingSchedule"
-                placeholder="+ Schedule"
-                multiple
-                disableCloseOnSelect
-                options={JOB_WORKING_SCHEDULE_OPTIONS.map((option) => option)}
-                getOptionLabel={(option) => option}
-                renderOption={(props, option) => (
-                  <li {...props} key={option}>
-                    {option}
-                  </li>
-                )}
-                renderTags={(selected, getTagProps) =>
-                  selected.map((option, index) => (
-                    <Chip
-                      {...getTagProps({ index })}
-                      key={option}
-                      label={option}
-                      size="small"
-                      color="info"
-                      variant="soft"
-                    />
-                  ))
-                }
-              />
-            </Stack>
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Locations</Typography>
-              <RHFAutocomplete
-                name="locations"
-                placeholder="+ Locations"
-                multiple
-                disableCloseOnSelect
-                options={countries.map((option) => option.label)}
-                getOptionLabel={(option) => option}
-                renderOption={(props, option) => {
-                  const { code, label, phone } = countries.filter(
-                    (country) => country.label === option
-                  )[0];
-
-                  if (!label) {
-                    return null;
-                  }
-
-                  return (
-                    <li {...props} key={label}>
-                      <Iconify
-                        key={label}
-                        icon={`circle-flags:${code.toLowerCase()}`}
-                        width={28}
-                        sx={{ mr: 1 }}
-                      />
-                      {label} ({code}) +{phone}
-                    </li>
-                  );
-                }}
-                renderTags={(selected, getTagProps) =>
-                  selected.map((option, index) => (
-                    <Chip
-                      {...getTagProps({ index })}
-                      key={option}
-                      label={option}
-                      size="small"
-                      color="info"
-                      variant="soft"
-                    />
-                  ))
-                }
-              />
-            </Stack>
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Expired</Typography>
-              <Controller
-                name="expiredDate"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
-                  <DatePicker
-                    {...field}
-                    format="dd/MM/yyyy"
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        error: !!error,
-                        helperText: error?.message,
-                      },
-                    }}
-                  />
-                )}
-              />
-            </Stack>
-
-            <Stack spacing={2}>
-              <Typography variant="subtitle2">Salary</Typography>
-
-              <Controller
-                name="salary.type"
-                control={control}
-                render={({ field }) => (
-                  <Box gap={2} display="grid" gridTemplateColumns="repeat(2, 1fr)">
-                    {[
-                      {
-                        label: 'Hourly',
-                        icon: <Iconify icon="solar:clock-circle-bold" width={32} sx={{ mb: 2 }} />,
-                      },
-                      {
-                        label: 'Custom',
-                        icon: <Iconify icon="solar:wad-of-money-bold" width={32} sx={{ mb: 2 }} />,
-                      },
-                    ].map((item) => (
-                      <Paper
-                        component={ButtonBase}
-                        variant="outlined"
-                        key={item.label}
-                        onClick={() => field.onChange(item.label)}
-                        sx={{
-                          p: 2.5,
-                          borderRadius: 1,
-                          typography: 'subtitle2',
-                          flexDirection: 'column',
-                          ...(item.label === field.value && {
-                            borderWidth: 2,
-                            borderColor: 'text.primary',
-                          }),
-                        }}
-                      >
-                        {item.icon}
-                        {item.label}
-                      </Paper>
-                    ))}
-                  </Box>
-                )}
-              />
-
-              <RHFTextField
-                name="salary.price"
-                placeholder="0.00"
-                type="number"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box sx={{ typography: 'subtitle2', color: 'text.disabled' }}>$</Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <RHFSwitch name="salary.negotiable" label="Salary is negotiable" />
-            </Stack>
-
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">Benefits</Typography>
-              <RHFMultiCheckbox
-                name="benefits"
-                options={JOB_BENEFIT_OPTIONS}
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                }}
-              />
-            </Stack>
-          </Stack>
-        </Card>
-      </Grid>
-    </>
-  );
-
-  const renderActions = (
-    <>
-      {mdUp && <Grid md={4} />}
-      <Grid xs={12} md={8} sx={{ display: 'flex', alignItems: 'center' }}>
-        <FormControlLabel
-          control={<Switch defaultChecked />}
-          label="Publish"
-          sx={{ flexGrow: 1, pl: 3 }}
-        />
-
-        <LoadingButton
-          type="submit"
-          variant="contained"
-          size="large"
-          loading={isSubmitting}
-          sx={{ ml: 2 }}
-        >
-          {!currentJob ? 'Create Job' : 'Save Changes'}
-        </LoadingButton>
-      </Grid>
-    </>
-  );
+    axios
+      .request(config)
+      .then((response) => {
+        console.log(JSON.stringify(response.data));
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
 
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
-      <Grid container spacing={3}>
-        {renderDetails}
+    <FormProvider methods={methods}>
+      <Card>
+        <Stack spacing={3} sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            <Grid xs={6}>
+              <RHFTextField name="pnr" label="PNR No" />
+            </Grid>
+            <Grid xs={6}>
+              <RHFTextField name="surname" label="Surname" />
+            </Grid>
+          </Grid>
+        </Stack>
 
-        {renderProperties}
+        <LoadingButton
+          variant="contained"
+          size="medium"
+          loading={isSubmitting}
+          onClick={getFlightInfo}
+          sx={{ mr: 2, mb: 2, float: 'right' }}
+          color="primary"
+        >
+          Search
+        </LoadingButton>
+      </Card>
 
-        {renderActions}
-      </Grid>
+      {isShowFlightInfo && (
+        <>
+          <Card sx={{ mt: 2 }}>
+            <Stack spacing={3} sx={{ p: 3 }}>
+              <Grid container spacing={3}>
+                <Grid xs={4}>
+                  <Typography variant="subtitle2">Flight No</Typography>
+                  <RHFTextField name="flightNo" paramValue="TK1" isReadOnly />
+                </Grid>
+                <Grid xs={4}>
+                  <Typography variant="subtitle2">Scheduled Date</Typography>
+                  <RHFTextField name="date" paramValue="2024-10-03" isReadOnly />
+                </Grid>
+                <Grid xs={4}>
+                  <Typography variant="subtitle2">Full Name</Typography>
+                  <RHFTextField name="fullname" paramValue="Enes Berat ARSLAN" isReadOnly />
+                </Grid>
+                <Grid xs={4}>
+                  <Typography variant="subtitle2">Arrival</Typography>
+                  <RHFTextField name="arr" paramValue="IST" isReadOnly />
+                </Grid>
+                <Grid xs={4}>
+                  <Typography variant="subtitle2">Departure</Typography>
+                  <RHFTextField name="dep" paramValue="JFK" isReadOnly />
+                </Grid>
+                <Grid xs={4}>
+                  <Typography variant="subtitle2">Weight Allowance</Typography>
+                  <RHFTextField name="weight" paramValue="30 KG" isReadOnly />
+                </Grid>
+              </Grid>
+            </Stack>
+          </Card>
+
+          <Card sx={{ mt: 2 }}>
+            <Stack spacing={3} sx={{ p: 3 }}>
+              <Grid container spacing={2}>
+                <Grid xs={5}>
+                  <Typography variant="subtitle2">Baggage Weight (KG)</Typography>
+                  <TextField
+                    fullWidth
+                    type="text"
+                    onChange={(event: any) => {
+                      setWeightAllowance(event.target.value * 20);
+                    }}
+                  />
+                </Grid>
+                <Grid xs={5}>
+                  <Typography variant="subtitle2">Miles</Typography>
+                  <TextField fullWidth type="text" value={weightAllowance} disabled />
+                </Grid>
+                <Grid xs={2}>
+                  <LoadingButton
+                    variant="contained"
+                    size="large"
+                    loading={isSubmitting}
+                    onClick={sendBaggage}
+                    color="primary"
+                    fullWidth
+                    sx={{ mt: '22px' }}
+                  >
+                    Confirm
+                  </LoadingButton>
+                </Grid>
+              </Grid>
+            </Stack>
+          </Card>
+        </>
+      )}
     </FormProvider>
   );
 }
