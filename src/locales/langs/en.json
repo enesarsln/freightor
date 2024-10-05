@@ -1,5 +1,5 @@
 {
-  "app": "app",
+  "app": "Flight List",
   "job": "job",
   "user": "user",
   "list": "list",
@@ -15,7 +15,7 @@
   "blank": "blank",
   "order": "order",
   "lists": "lists",
-  "create": "create",
+  "create": "Baggage to Miles",
   "kanban": "kanban",
   "general": "general",
   "banking": "banking",

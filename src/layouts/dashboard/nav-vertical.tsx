@@ -15,7 +15,7 @@ import { NavSectionVertical } from 'src/components/nav-section';
 //
 import { NAV } from '../config-layout';
 import { useNavData } from './config-navigation';
-import { NavToggleButton, NavUpgrade } from '../_common';
+import { NavToggleButton } from '../_common';
 
 // ----------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ export default function NavVertical({ openNav, onCloseNav }: Props) {
         },
       }}
     >
-      <Logo sx={{ mt: 3, ml: 4, mb: 1 }} />
+      <Logo sx={{ mt: 3, ml: 4, mb: 5 }} />
 
       <NavSectionVertical
         data={navData}
@@ -61,8 +61,6 @@ export default function NavVertical({ openNav, onCloseNav }: Props) {
       />
 
       <Box sx={{ flexGrow: 1 }} />
-
-      <NavUpgrade />
     </Scrollbar>
   );
 

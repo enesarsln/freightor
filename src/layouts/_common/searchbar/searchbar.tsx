@@ -12,7 +12,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Dialog, { dialogClasses } from '@mui/material/Dialog';
 // hooks
 import { useBoolean } from 'src/hooks/use-boolean';
-import { useResponsive } from 'src/hooks/use-responsive';
 import { useEventListener } from 'src/hooks/use-event-listener';
 // components
 import Label from 'src/components/label';
@@ -33,8 +32,6 @@ function Searchbar() {
   const router = useRouter();
 
   const search = useBoolean();
-
-  const mdUp = useResponsive('up', 'md');
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -111,7 +108,7 @@ function Searchbar() {
         <Iconify icon="eva:search-fill" />
       </IconButton>
 
-      {mdUp && <Label sx={{ px: 0.75, fontSize: 12, color: 'text.secondary' }}>⌘K</Label>}
+      {/* {mdUp && <Label sx={{ px: 0.75, fontSize: 12, color: 'text.secondary' }}>⌘K</Label>} */}
     </Stack>
   );
 

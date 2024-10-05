@@ -1,0 +1,12 @@
+.weight-display {
+  transition: opacity 0.5s ease-in-out; /* Yumuşak geçiş */
+  opacity: 1;
+}
+
+.weight-display.hidden {
+  opacity: 0;
+}
+
+.weight-display.visible {
+  opacity: 1;
+}
